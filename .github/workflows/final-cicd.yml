@@ -1,0 +1,100 @@
+name: Student Placement Portal CI-CD
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Validate website
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Validate HTML
+        run: npx --yes html-validate@10 website/index.html
+
+      - name: Check JavaScript syntax
+        run: node --check website/script.js
+
+      - name: Check formatting
+        run: npx --yes prettier@3 --check website/index.html website/style.css website/script.js
+
+  build:
+    name: Build website artifact
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Create build directory
+        run: |
+          mkdir -p dist
+          cp -R website/. dist/
+
+      - name: Verify build files
+        run: |
+          test -f dist/index.html
+          test -f dist/style.css
+          test -f dist/script.js
+          ls -la dist
+
+      - name: Upload website artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: student-placement-portal-build
+          path: dist/
+          retention-days: 7
+
+  deploy-development:
+    name: Development deployment simulation
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: development
+    steps:
+      - name: Download website artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: student-placement-portal-build
+          path: dist/
+
+      - name: Verify development package
+        run: |
+          test -f dist/index.html
+          echo "Development package is ready."
+          echo "This is a deployment simulation; no hosting service is changed."
+
+  deploy-production:
+    name: Production deployment simulation
+    needs: deploy-development
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Download website artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: student-placement-portal-build
+          path: dist/
+
+      - name: Verify production package
+        run: |
+          test -f dist/index.html
+          echo "Production package is ready."
+          echo "This is a deployment simulation; no hosting service is changed."
