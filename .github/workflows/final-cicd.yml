@@ -16,6 +16,7 @@ jobs:
   validate:
     name: Validate website
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -38,6 +39,7 @@ jobs:
     name: Build website artifact
     needs: validate
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -67,6 +69,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: development
+
     steps:
       - name: Download website artifact
         uses: actions/download-artifact@v4
@@ -86,6 +89,7 @@ jobs:
     if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: production
+
     steps:
       - name: Download website artifact
         uses: actions/download-artifact@v4
